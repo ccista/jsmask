@@ -122,29 +122,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 /******  *******/
 
-/****** а это тоже самое но error блок .error-message уже имеется надо формой *******/
+/****** а это тоже самое но error блок .error-message уже имеется над формой *******/
 /****** МАСКА *******/
 document.addEventListener('DOMContentLoaded', () => {
   const phoneInputs = document.querySelectorAll('.phoneForm');
+  const errorText = 'Номер должен быть в формате +7 9XX XXX-XX-XX';
 
   const getNumbers = input => input.value.replace(/\D/g, '');
-  const getForm = input => input.closest('form');
-  const getButton = form => form?.querySelector('[type="submit"]');
 
   const getError = form =>
-  form.closest('.consultation')?.querySelector('.error-message') ?? null;
+    form?.closest('.consultation')?.querySelector('.error-message') ?? null;
 
-    const showError = form => {
-      const error = getError(form);
-    
-      if (error) {
-        error.textContent = 'Номер должен быть в формате +7 9XX XXX-XX-XX';
-        error.hidden = false;
-      }
-    
-      const btn = getButton(form);
-      if (btn) btn.disabled = true;
-    };
+  const showError = form => {
+    const error = getError(form);
+
+    if (error) {
+      error.textContent = errorText;
+      error.hidden = false;
+    }
+  };
 
   const clearError = form => {
     const error = getError(form);
@@ -195,38 +191,33 @@ document.addEventListener('DOMContentLoaded', () => {
     numbers[0] === '7' &&
     numbers[1] === '9';
 
-  const handleInput = e => {
-    const input = e.target;
-    const form = getForm(input);
-    const btn = getButton(form);
+  const updateValidity = input => {
+    const numbers = getNumbers(input);
 
-    let numbers = getNumbers(input);
-    input.value = formatPhone(numbers);
-    numbers = getNumbers(input);
-
-    // Ошибка шага → показываем и блокируем
-    if (!validateStep(numbers)) {
-      showError(form);
-      return;
-    }
-
-    // Если шаг корректный — убираем сообщение
-    clearError(form);
-
-    // Полная проверка
-    if (validateFull(numbers)) {
-      if (btn) btn.disabled = false;
-    } else {
-      if (btn) btn.disabled = true;
-    }
+    // Пустое поле проверяет встроенный required.
+    input.setCustomValidity(
+      input.value === '' || validateFull(numbers) ? '' : errorText
+    );
   };
 
   phoneInputs.forEach(input => {
-    const form = getForm(input);
-    const btn = getButton(form);
-    if (btn) btn.disabled = true;
+    const form = input.closest('form');
 
-    input.addEventListener('input', handleInput);
+    updateValidity(input);
+
+    input.addEventListener('input', () => {
+      input.value = formatPhone(getNumbers(input));
+
+      const numbers = getNumbers(input);
+
+      if (!validateStep(numbers)) {
+        showError(form);
+      } else {
+        clearError(form);
+      }
+
+      updateValidity(input);
+    });
   });
 });
 /******  *******/
